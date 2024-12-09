@@ -2614,7 +2614,7 @@ class VllmConfig:
             f"enable_prefix_caching={self.cache_config.enable_prefix_caching}, "
             f"chunked_prefill_enabled={self.scheduler_config.chunked_prefill_enabled}, "  # noqa
             f"use_async_output_proc={self.model_config.use_async_output_proc}, "
-            f"mm_cache_preprocessor={self.model_config.mm_cache_preprocessor!r}, " # noqa
+            f"mm_cache_preprocessor={self.model_config.mm_cache_preprocessor!r}, "  # noqa
             f"mm_processor_kwargs={self.model_config.mm_processor_kwargs}, "
             f"pooler_config={self.model_config.pooler_config!r}, "
             f"compilation_config={self.compilation_config!r}")
