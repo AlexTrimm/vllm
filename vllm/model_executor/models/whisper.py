@@ -470,6 +470,8 @@ class WhisperDecoder(nn.Module):
         positions = self.embed_positions(positions)
         hidden_states = inputs_embeds + positions
 
+        hidden_states = hidden_states = hidden_states[::2,:]
+
         for idx, decoder_layer in enumerate(self.layers):
             hidden_states = decoder_layer(
                 hidden_states,
@@ -572,7 +574,7 @@ class WhisperModel(nn.Module):
 
 
 def get_max_whisper_audio_tokens(ctx: InputContext) -> int:
-    return ctx.model_config.hf_config.max_source_positions
+    return ctx.model_config.hf_config.max_source_positions // 2
 
 
 def dummy_encoder_data_for_whisper(ctx: InputContext, seq_len: int,
@@ -628,6 +630,7 @@ def input_mapper_for_whisper(
                        return_tensors="pt")
     kwargs["input_features"] = kwargs["input_features"].squeeze(0).to(
         ctx.model_config.dtype)
+    kwargs["input_features"] = kwargs["input_features"][:,::2]
 
     return MultiModalKwargs(kwargs)
 
