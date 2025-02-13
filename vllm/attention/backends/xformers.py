@@ -149,7 +149,7 @@ class XFormersMetadata(AttentionMetadata, PagedAttentionMetadata):
     max_encoder_seq_len: Optional[int] = None
 
     # Number of tokens input to encoder
-    num_encoder_tokens: Optional[int] = None
+    #num_encoder_tokens: Optional[int] = None
 
     # Cross-attention memory-mapping data structures: slot mapping
     # and block tables
@@ -165,6 +165,10 @@ class XFormersMetadata(AttentionMetadata, PagedAttentionMetadata):
         self.attn_bias: Optional[List[AttentionBias]] = None
         self.encoder_attn_bias: Optional[List[AttentionBias]] = None
         self.cross_attn_bias: Optional[List[AttentionBias]] = None
+
+    @property
+    def num_encoder_tokens(self) -> Optional[List[int]]:
+        return int(self.encoder_seq_lens_tensor.sum().item())
 
     @property
     def is_all_encoder_attn_metadata_set(self):
