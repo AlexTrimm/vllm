@@ -167,7 +167,7 @@ class XFormersMetadata(AttentionMetadata, PagedAttentionMetadata):
         self.cross_attn_bias: Optional[List[AttentionBias]] = None
 
     @property
-    def num_encoder_tokens(self) -> Optional[List[int]]:
+    def num_encoder_tokens(self) ->  Optional[int]:
         return int(self.encoder_seq_lens_tensor.sum().item())
 
     @property
