@@ -507,7 +507,6 @@ class EncoderDecoderModelRunner(GPUModelRunnerBase[EncoderDecoderModelInput]):
         attn_metadata = model_input.attn_metadata
         assert attn_metadata is not None
         (
-            attn_metadata.num_encoder_tokens,
             attn_metadata.encoder_seq_lens,
             attn_metadata.encoder_seq_lens_tensor,
             attn_metadata.max_encoder_seq_len,
@@ -515,7 +514,6 @@ class EncoderDecoderModelRunner(GPUModelRunnerBase[EncoderDecoderModelInput]):
             attn_metadata.cross_slot_mapping,
             attn_metadata.cross_block_tables,
         ) = (
-            sum(encoder_seq_lens),
             encoder_seq_lens,
             encoder_seq_lens_tensor,
             max_encoder_seq_len,
