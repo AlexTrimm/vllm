@@ -630,7 +630,6 @@ def input_mapper_for_whisper(
                        return_tensors="pt")
     kwargs["input_features"] = kwargs["input_features"].squeeze(0).to(
         ctx.model_config.dtype)
-    kwargs["input_features"] = kwargs["input_features"][:,::2]
 
     return MultiModalKwargs(kwargs)
 
