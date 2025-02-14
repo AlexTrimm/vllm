@@ -423,6 +423,8 @@ class WhisperEncoder(nn.Module):
             hidden_states.append(embeds)
         hidden_states = torch.cat(hidden_states)
 
+        hidden_states = hidden_states = hidden_states[::2,:]
+
         for idx, encoder_layer in enumerate(self.layers):
             hidden_states = encoder_layer(
                 hidden_states,
@@ -469,8 +471,6 @@ class WhisperDecoder(nn.Module):
         inputs_embeds = self.get_input_embeddings(input_ids)
         positions = self.embed_positions(positions)
         hidden_states = inputs_embeds + positions
-
-        hidden_states = hidden_states = hidden_states[::2,:]
 
         for idx, decoder_layer in enumerate(self.layers):
             hidden_states = decoder_layer(
