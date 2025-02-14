@@ -423,6 +423,8 @@ class WhisperEncoder(nn.Module):
             hidden_states.append(embeds)
         hidden_states = torch.cat(hidden_states)
 
+        hidden_states = hidden_states = hidden_states[::2,:]
+
         for idx, encoder_layer in enumerate(self.layers):
             hidden_states = encoder_layer(
                 hidden_states,
@@ -572,7 +574,7 @@ class WhisperModel(nn.Module):
 
 
 def get_max_whisper_audio_tokens(ctx: InputContext) -> int:
-    return ctx.model_config.hf_config.max_source_positions
+    return ctx.model_config.hf_config.max_source_positions // 2
 
 
 def dummy_encoder_data_for_whisper(ctx: InputContext, seq_len: int,
