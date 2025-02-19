@@ -491,40 +491,14 @@ class EncoderDecoderModelRunner(GPUModelRunnerBase[EncoderDecoderModelInput]):
             )
 
         # Compute encoder sequence lengths & encoder
-        # sequence starting offset tensors
-        """
-        max_encoder_seq_len = max(encoder_seq_lens, default=0)
-        encoder_seq_lens_tensor = self._list_to_int32_tensor(encoder_seq_lens)
-        encoder_seq_start_loc = torch.zeros(encoder_seq_lens_tensor.shape[0] +
-                                            1,
-                                            dtype=torch.int32,
-                                            device=self.device)
-        torch.cumsum(encoder_seq_lens_tensor,
-                     dim=0,
-                     dtype=encoder_seq_start_loc.dtype,
-                     out=encoder_seq_start_loc[1:])
-        """
+        
         # Update attention metadata with encoder-oriented attributes
         attn_metadata = model_input.attn_metadata
         assert attn_metadata is not None
         attn_metadata.update_encoder_attn(encoder_seq_lens, self.device)
-        (
-            #attn_metadata.num_encoder_tokens,
-            #attn_metadata.encoder_seq_lens,
-            #attn_metadata.encoder_seq_lens_tensor,
-            #attn_metadata.max_encoder_seq_len,
-            #attn_metadata.encoder_seq_start_loc,
-            attn_metadata.cross_slot_mapping,
-            attn_metadata.cross_block_tables,
-        ) = (
-            #sum(encoder_seq_lens),
-            #encoder_seq_lens,
-            #encoder_seq_lens_tensor,
-            #max_encoder_seq_len,
-            #encoder_seq_start_loc,
-            cross_slot_mapping_tensor,
-            cross_block_tables,
-        )
+        
+        attn_metadata.cross_slot_mapping = cross_slot_mapping_tensor
+        attn_metadata.cross_block_tables = cross_block_tables
 
         return (attn_metadata, encoder_input_tokens_tensor,
                 encoder_input_positions_tensor)
