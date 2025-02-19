@@ -149,7 +149,7 @@ class XFormersMetadata(AttentionMetadata, PagedAttentionMetadata):
     max_encoder_seq_len: Optional[int] = None
 
     # Number of tokens input to encoder
-    #num_encoder_tokens: Optional[int] = None
+    num_encoder_tokens: Optional[int] = None
 
     # Cross-attention memory-mapping data structures: slot mapping
     # and block tables
@@ -166,9 +166,21 @@ class XFormersMetadata(AttentionMetadata, PagedAttentionMetadata):
         self.encoder_attn_bias: Optional[List[AttentionBias]] = None
         self.cross_attn_bias: Optional[List[AttentionBias]] = None
 
+    """
     @property
     def num_encoder_tokens(self) ->  Optional[int]:
         return int(self.encoder_seq_lens_tensor.sum().item())
+    """
+    
+    def update_encoder_attn(self, encoder_seq_lens, device):
+        encoder_seq_lens_tensor = torch.tensor(encoder_seq_lens, dtype=torch.int32, device=device)
+        encoder_seq_start_loc = torch.zeros(encoder_seq_lens_tensor.shape[0] + 1, dtype=torch.int32, device=device)
+        torch.cumsum(encoder_seq_lens_tensor, dim=0, dtype=encoder_seq_start_loc.dtype, out=encoder_seq_start_loc[1:])
+        self.encoder_seq_lens = encoder_seq_lens
+        self.num_encoder_tokens = sum(encoder_seq_lens)
+        self.max_encoder_seq_len = max(encoder_seq_lens, default=0)
+        self.encoder_seq_lens_tensor = encoder_seq_lens_tensor
+        self.encoder_seq_start_loc = encoder_seq_start_loc
 
     @property
     def is_all_encoder_attn_metadata_set(self):
@@ -358,11 +370,11 @@ class XFormersMetadataBuilder(CommonMetadataBuilder[XFormersMetadata]):
 class XFormersImpl(AttentionImpl[XFormersMetadata]):
     """
     If the input tensors contain prompt tokens, the layout is as follows:
-    |<--------------- num_prefill_tokens ----------------->|	
+    |<--------------- num_prefill_tokens ----------------->|    
     |<--prefill_0-->|<--prefill_1-->|...|<--prefill_N-1--->|
 
-    Otherwise, the layout is as follows:	
-    |<----------------- num_decode_tokens ------------------>|	
+    Otherwise, the layout is as follows:    
+    |<----------------- num_decode_tokens ------------------>|  
     |<--decode_0-->|..........|<--decode_M-1-->|<--padding-->|
 
     Generation tokens can contain padding when cuda-graph is used.
@@ -666,7 +678,8 @@ class XFormersImpl(AttentionImpl[XFormersMetadata]):
         # Set attention bias if not provided. This typically happens at
         # the very attention layer of every iteration.
         # FIXME(woosuk): This is a hack.
-        attn_bias = _get_attn_bias(attn_metadata, attn_type)
+        #attn_bias = _get_attn_bias(attn_metadata, attn_type)
+        attn_bias = None
         if attn_bias is None:
             if self.alibi_slopes is None:
 
@@ -721,7 +734,7 @@ class XFormersImpl(AttentionImpl[XFormersMetadata]):
                                              self.num_kv_heads, query.dtype,
                                              attn_metadata.seq_lens)
 
-            _set_attn_bias(attn_metadata, attn_bias, attn_type)
+            #_set_attn_bias(attn_metadata, attn_bias, attn_type)
 
         # No alibi slopes.
         # TODO(woosuk): Too many view operations. Let's try to reduce
@@ -747,7 +760,8 @@ class XFormersImpl(AttentionImpl[XFormersMetadata]):
         assert attn_metadata.seq_lens is not None
         output = torch.empty_like(original_query)
         start = 0
-        for i, seq_len in enumerate(attn_metadata.seq_lens):
+        lens = attn_metadata.encoder_seq_lens if (attn_type == AttentionType.ENCODER) else attn_metadata.seq_lens
+        for i, seq_len in enumerate(lens):
             end = start + seq_len
             out = xops.memory_efficient_attention_forward(
                 query[None, start:end],

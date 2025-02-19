@@ -429,6 +429,12 @@ class WhisperEncoder(nn.Module):
                 kv_cache=kv_caches[idx],
                 attn_metadata=attn_metadata,
             )
+            if idx==4:
+                # update
+                new_seq_len = [x//2 for x in attn_metadata.encoder_seq_lens]
+                attn_metadata.update_encoder_attn(new_seq_len, attn_metadata.encoder_seq_lens_tensor.device)
+                attn_metadata.prefill_metadata.update_encoder_attn(new_seq_len, attn_metadata.encoder_seq_lens_tensor.device)
+                hidden_states = hidden_states[::2,:]
 
         hidden_states = self.layer_norm(hidden_states)
         return hidden_states
