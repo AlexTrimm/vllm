@@ -760,8 +760,7 @@ class XFormersImpl(AttentionImpl[XFormersMetadata]):
         assert attn_metadata.seq_lens is not None
         output = torch.empty_like(original_query)
         start = 0
-        lens = attn_metadata.encoder_seq_lens if (attn_type == AttentionType.ENCODER) else attn_metadata.seq_lens
-        for i, seq_len in enumerate(lens):
+        for i, seq_len in enumerate(attn_metadata.seq_lens):
             end = start + seq_len
             out = xops.memory_efficient_attention_forward(
                 query[None, start:end],
