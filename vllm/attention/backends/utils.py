@@ -411,19 +411,10 @@ class CommonAttentionState(AttentionState):
         """
         # During decode phase the cross_slot_mapping will be empty. Hence set
         # an empty tensor for CUDA Graph capture.
-        attn_metadata.cross_slot_mapping = torch.tensor(
-            [], dtype=torch.int).cuda()
-        attn_metadata.cross_block_tables = torch.full(
-            (batch_size, self.runner.get_max_block_per_batch()),
-            1,
-            dtype=torch.int).cuda()
-        attn_metadata.encoder_seq_lens = torch.full((batch_size, ),
-                                                    1,
-                                                    dtype=torch.int).cuda()
-        attn_metadata.encoder_seq_lens_tensor = torch.full(
-            (batch_size, ), 1, dtype=torch.int).cuda()
-        attn_metadata.max_encoder_seq_len = self.runner.max_seq_len_to_capture
-        attn_metadata.num_encoder_tokens = 0
+        attn_metadata.cross_slot_mapping = torch.tensor([], dtype=torch.int).cuda()
+        attn_metadata.cross_block_tables = torch.full((batch_size, self.runner.get_max_block_per_batch()),1,dtype=torch.int).cuda()
+        enc_seq = [1]*batch_size
+        attn_metadata.update_encoder_attn(enc_seq, 0)
 
     def _add_additonal_input_buffers_for_enc_dec_model(
             self, attn_metadata, input_buffers: Dict[str, Any]):

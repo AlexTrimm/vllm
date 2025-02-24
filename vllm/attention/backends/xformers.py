@@ -166,6 +166,16 @@ class XFormersMetadata(AttentionMetadata, PagedAttentionMetadata):
         self.encoder_attn_bias: Optional[List[AttentionBias]] = None
         self.cross_attn_bias: Optional[List[AttentionBias]] = None
 
+    def update_encoder_attn(self, encoder_seq_lens, device):
+        encoder_seq_lens_tensor = torch.tensor(encoder_seq_lens, dtype=torch.int32, device=device)
+        encoder_seq_start_loc = torch.zeros(encoder_seq_lens_tensor.shape[0] + 1, dtype=torch.int32, device=device)
+        torch.cumsum(encoder_seq_lens_tensor, dim=0, dtype=encoder_seq_start_loc.dtype, out=encoder_seq_start_loc[1:])
+        self.encoder_seq_lens = encoder_seq_lens
+        self.num_encoder_tokens = sum(encoder_seq_lens)
+        self.max_encoder_seq_len = max(encoder_seq_lens, default=0)
+        self.encoder_seq_lens_tensor = encoder_seq_lens_tensor
+        self.encoder_seq_start_loc = encoder_seq_start_loc
+
     @property
     def is_all_encoder_attn_metadata_set(self):
         '''
