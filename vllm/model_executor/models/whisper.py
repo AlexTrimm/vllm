@@ -399,8 +399,11 @@ class WhisperEncoder(nn.Module):
             hidden_states.append(embeds)
         hidden_states = torch.cat(hidden_states)
 
-        for encoder_layer in self.layers:
+        for i, encoder_layer in enumerate(self.layers):
             hidden_states = encoder_layer(hidden_states)
+
+            if i==4:
+                hidden_states = hidden_states = hidden_states[::2,:]
 
         hidden_states = self.layer_norm(hidden_states)
         return hidden_states
@@ -545,7 +548,7 @@ class WhisperProcessingInfo(BaseProcessingInfo):
         return feature_extractor
 
     def get_max_audio_tokens(self) -> int:
-        return self.get_hf_config().max_source_positions
+        return self.get_hf_config().max_source_positions // 2
 
     def get_mm_max_tokens_per_item(
         self,

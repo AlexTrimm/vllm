@@ -417,6 +417,17 @@ class XFormersImpl(AttentionImpl[XFormersMetadata]):
 
         self.attn_type = attn_type
 
+    def forward_encoder(self, query, key, value, attn_metadata):
+        from collections import namedtuple
+        Attn = namedtuple('Attn', ['encoder_seq_lens']) #, 'encoder_attn_bias'])
+        l = query.shape[0]//50
+        n = 50
+        meta = Attn([l]*n)#, None)
+        output = torch.empty_like(query)
+        out = self._run_memory_efficient_xformers_forward(query, key, value, meta, attn_type=AttentionType.ENCODER)
+        output[:output.shape[0]] = out
+        return output.view(-1, self.num_heads * self.head_size)
+
     def forward(
         self,
         layer: AttentionLayer,
@@ -499,6 +510,9 @@ class XFormersImpl(AttentionImpl[XFormersMetadata]):
             value = value.view(-1, self.num_kv_heads, self.head_size)
         else:
             assert value is None
+
+        if (attn_type == AttentionType.ENCODER):
+            return self.forward_encoder(query, key, value, attn_metadata)
 
         # Self-attention vs. cross-attention will impact
         # which KV cache memory-mapping & which
@@ -661,7 +675,7 @@ class XFormersImpl(AttentionImpl[XFormersMetadata]):
         # Set attention bias if not provided. This typically happens at
         # the very attention layer of every iteration.
         # FIXME(woosuk): This is a hack.
-        attn_bias = _get_attn_bias(attn_metadata, attn_type)
+        attn_bias = None #_get_attn_bias(attn_metadata, attn_type)
         if attn_bias is None:
             if self.alibi_slopes is None:
 
@@ -718,7 +732,7 @@ class XFormersImpl(AttentionImpl[XFormersMetadata]):
                                              self.num_kv_heads, query.dtype,
                                              attn_metadata.seq_lens)
 
-            _set_attn_bias(attn_metadata, attn_bias, attn_type)
+            #_set_attn_bias(attn_metadata, attn_bias, attn_type)
 
         # No alibi slopes.
         # TODO(woosuk): Too many view operations. Let's try to reduce
